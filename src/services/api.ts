@@ -1,4 +1,5 @@
 import { CVAnalysisData, ApplicationType } from '../contexts/CVAnalysisContext';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Mock function to simulate PDF text extraction
 export const extractTextFromPDF = async (file: File): Promise<string> => {
@@ -74,8 +75,7 @@ export const analyzeCVWithGemini = async (
   applicationName: string,
   applicationDescription: string
 ): Promise<Omit<CVAnalysisData, 'cvText' | 'fileName' | 'applicationInfo'>> => {
-  const apiKey = 'AIzaSyBAc6PoDqzUUHCF-56-_C__ofRXrfjzh78';
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   const prompt = `
 You are a CV analyzer AI. Analyze the following resume text for a ${applicationType} application.
@@ -162,7 +162,7 @@ const extractJSONFromText = (text: string): string => {
 
 
 
-const GEMINI_API_KEY = 'AIzaSyBAc6PoDqzUUHCF-56-_C__ofRXrfjzh78';
+
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export const buildCVWithAI = async (
