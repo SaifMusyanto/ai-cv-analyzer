@@ -1,73 +1,30 @@
 import { CVAnalysisData, ApplicationType } from '../contexts/CVAnalysisContext';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-// Mock function to simulate PDF text extraction
+import * as pdfjsLib from 'pdfjs-dist';
+import 'pdfjs-dist/build/pdf.worker.entry'; // worker dimasukkan ke bundle
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
 export const extractTextFromPDF = async (file: File): Promise<string> => {
-  // In a real implementation, this would use PDF.co API or similar
-  // For the MVP, we'll simulate the text extraction
-  console.log('Extracting text from PDF:', file.name);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`Sample extracted text from ${file.name}. 
-        This is a professional CV for a software developer with 5 years of experience.
-        Skills include React, TypeScript, Node.js, and cloud technologies.
-        Education: BS in Computer Science, worked at multiple tech companies.`);
-    }, 1500);
-  });
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strings = (content.items as { str: string }[]).map(item => item.str).join(' ');
+    fullText += strings + '\n\n';
+  }
+
+  return fullText.trim();
 };
 
+
+
 // Mock function to simulate sending data to Gemini API for analysis
-// export const analyzeCVWithGemini = async (
-//   cvText: string,
-//   applicationType: ApplicationType,
-//   applicationName: string,
-//   applicationDescription: string
-// ): Promise<Omit<CVAnalysisData, 'cvText' | 'fileName' | 'applicationInfo'>> => {
-//   // In a real implementation, this would call the Gemini API
-//   console.log('Analyzing CV with Gemini:', { cvText, applicationType, applicationName, applicationDescription });
-  
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       resolve({
-//         scores: {
-//           overall: 74,
-//           relevance: 70,
-//           structure: 80,
-//           writing: 75,
-//           experience: 65,
-//           professionalism: 80,
-//         },
-//         suggestions: [
-//           {
-//             section: 'Header',
-//             issue: 'Contact information not prominent',
-//             suggestion: 'Move your email and phone number to be more visible under your name',
-//           },
-//           {
-//             section: 'Experience',
-//             issue: 'Job descriptions lack quantifiable achievements',
-//             suggestion: 'Add metrics and specific outcomes to your job descriptions',
-//           },
-//           {
-//             section: 'Skills',
-//             issue: 'Skills not aligned with job description',
-//             suggestion: 'Emphasize skills mentioned in the job posting like cloud technologies',
-//           },
-//           {
-//             section: 'Education',
-//             issue: 'Education section lacks details',
-//             suggestion: 'Add GPA, relevant coursework, and any academic achievements',
-//           },
-//           {
-//             section: 'Overall',
-//             issue: 'CV is too generic',
-//             suggestion: 'Tailor your CV specifically to the role by highlighting relevant experiences',
-//           },
-//         ],
-//       });
-//     }, 2000);
-//   });
-// };
 
 export const analyzeCVWithGemini = async (
   cvText: string,
@@ -75,6 +32,7 @@ export const analyzeCVWithGemini = async (
   applicationName: string,
   applicationDescription: string
 ): Promise<Omit<CVAnalysisData, 'cvText' | 'fileName' | 'applicationInfo'>> => {
+  console.log('GEMINI API KEY:', GEMINI_API_KEY);
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
   const prompt = `
@@ -185,6 +143,9 @@ ${analysisData.suggestions.join('\n')}
 
 Generate the CV in Markdown format and wrap the result in triple backticks using "markdown".
 `;
+
+console.log('PROMPT TO GEMINI ===>');
+console.log(prompt);
 
   try {
     const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {

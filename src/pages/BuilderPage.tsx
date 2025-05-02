@@ -16,7 +16,10 @@ const BuilderPage: React.FC = () => {
   // If no analysis data is available, prompt user to analyze CV first
   const noAnalysisData = !analysisData;
   
+  
   const handleBuildCV = async () => {
+    console.log('Analysis Data:', analysisData);
+    console.log('Template:', selectedTemplate);
     if (!analysisData) {
       setError('Please analyze your CV first before building a new one');
       return;
@@ -25,6 +28,8 @@ const BuilderPage: React.FC = () => {
     try {
       setIsGenerating(true);
       setError(null);
+      
+
       
       const result = await buildCVWithAI(analysisData, selectedTemplate);
       setGeneratedCV(result);
